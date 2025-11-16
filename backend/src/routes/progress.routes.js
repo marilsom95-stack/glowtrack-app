@@ -1,17 +1,16 @@
 import { Router } from 'express';
-import { authRequired } from '../middlewares/auth.js';
+import { authenticate } from '../middleware/auth.middleware.js';
 import {
-  addProgressPhoto,
-  getProgressPhotos,
-  getProgressSummary
+  getProgressOverview,
+  recordCheckIn,
+  savePhotoReference,
 } from '../controllers/progress.controller.js';
 
 const router = Router();
 
-router.use(authRequired);
-
-router.post('/photos', addProgressPhoto);
-router.get('/photos', getProgressPhotos);
-router.get('/summary', getProgressSummary);
+router.use(authenticate);
+router.get('/', getProgressOverview);
+router.post('/check-in', recordCheckIn);
+router.post('/photos', savePhotoReference);
 
 export default router;

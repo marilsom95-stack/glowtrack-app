@@ -1,85 +1,52 @@
-import { ProgressPhoto } from '../models/progressPhoto.model.js';
-import { RoutineCheckin } from '../models/routineCheckin.model.js';
-import { LifestyleLog } from '../models/lifestyleLog.model.js';
-import { MoodEntry } from '../models/moodEntry.model.js';
+import Progress from '../models/Progress.js';
+import Photo from '../models/Photo.js';
 import { sendError, sendSuccess } from '../utils/response.js';
+import { calculateAchievements, updateStreak } from '../services/progress.service.js';
 
-const getDayKey = (date) => date.toISOString().split('T')[0];
-
-const computeStreak = (keys) => {
-  if (!keys.length) return 0;
-  const sorted = [...keys]
-    .map((key) => new Date(key))
-    .sort((a, b) => a.getTime() - b.getTime());
-  let streak = 0;
-  let current = 0;
-  let prev = null;
-  sorted.forEach((date) => {
-    if (prev) {
-      const diff = date.getTime() - prev.getTime();
-      if (diff <= 24 * 60 * 60 * 1000) {
-        current += 1;
-      } else {
-        current = 1;
-      }
-    } else {
-      current = 1;
-    }
-    prev = date;
-    streak = Math.max(streak, current);
-  });
-  return streak;
+const getOrCreateProgress = async (userId) => {
+  const existing = await Progress.findOne({ user: userId });
+  if (existing) return existing;
+  return Progress.create({ user: userId });
 };
 
-export const addProgressPhoto = async (req, res) => {
+export const getProgressOverview = async (req, res, next) => {
   try {
-    const { imageUrl, note, date } = req.body;
-    if (!imageUrl) {
-      return sendError(res, 422, 'imageUrl é obrigatório (pode ser mock por agora)');
-    }
-
-    const photo = await ProgressPhoto.create({
-      userId: req.userId,
-      imageUrl,
-      note,
-      date: date ? new Date(date) : new Date()
-    });
-
-    return sendSuccess(res, { photo }, 'Foto de progresso registada');
-  } catch (error) {
-    return sendError(res, 500, 'Failed to save progress photo', { error: error.message });
-  }
-};
-
-export const getProgressPhotos = async (req, res) => {
-  try {
-    const photos = await ProgressPhoto.find({ userId: req.userId }).sort({ date: -1 });
-    return sendSuccess(res, { photos });
-  } catch (error) {
-    return sendError(res, 500, 'Failed to fetch progress photos', { error: error.message });
-  }
-};
-
-export const getProgressSummary = async (req, res) => {
-  try {
-    const userId = req.userId;
-    const checkins = await RoutineCheckin.find({ userId });
-    const lifestyleLogs = await LifestyleLog.find({ userId });
-    const moods = await MoodEntry.find({ userId });
-
-    const routineDays = new Set(checkins.map((c) => getDayKey(c.date)));
-    const hydrationDays = new Set(lifestyleLogs.filter((log) => log.waterMl > 0).map((log) => getDayKey(log.date)));
-    const moodDays = new Set(moods.map((m) => getDayKey(m.date)));
-
-    const streak = computeStreak(Array.from(routineDays));
-
+    const progress = await getOrCreateProgress(req.user._id);
+    const photos = await Photo.find({ user: req.user._id }).sort({ takenAt: -1 });
+    const achievements = calculateAchievements(progress);
     return sendSuccess(res, {
-      routineDays: routineDays.size,
-      hydrationDays: hydrationDays.size,
-      moodDays: moodDays.size,
-      skinCareStreak: streak
+      progress,
+      photos,
+      achievements,
     });
   } catch (error) {
-    return sendError(res, 500, 'Failed to summarize progress', { error: error.message });
+    next(error);
+  }
+};
+
+export const recordCheckIn = async (req, res, next) => {
+  try {
+    const { note, mood } = req.body;
+    const progress = await getOrCreateProgress(req.user._id);
+    progress.checkIns.push({ note, mood });
+    progress.streak = updateStreak(progress);
+    progress.achievements = calculateAchievements(progress);
+    await progress.save();
+    return sendSuccess(res, { progress }, 'Check-in guardado!');
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const savePhotoReference = async (req, res, next) => {
+  try {
+    const { url, caption } = req.body;
+    if (!url) {
+      return sendError(res, 400, 'Partilha um link ou descrição da foto.');
+    }
+    const photo = await Photo.create({ user: req.user._id, url, caption });
+    return sendSuccess(res, { photo }, 'Foto adicionada ao progresso.');
+  } catch (error) {
+    next(error);
   }
 };
