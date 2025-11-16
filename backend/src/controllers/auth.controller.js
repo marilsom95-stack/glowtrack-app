@@ -1,78 +1,63 @@
-import { validationResult } from 'express-validator';
-import { User } from '../models/user.model.js';
-import { signToken } from '../utils/jwt.js';
+import bcrypt from 'bcryptjs';
+import User from '../models/User.js';
+import { generateToken } from '../utils/jwt.js';
 import { sendError, sendSuccess } from '../utils/response.js';
 
-const handleValidationErrors = (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    const extracted = errors.array().map((err) => ({ field: err.param, message: err.msg }));
-    sendError(res, 422, 'Validation failed', { errors: extracted });
-    return true;
-  }
-  return false;
-};
+const buildUserResponse = (user) => ({
+  user: user.toJSON(),
+  token: generateToken(user._id),
+});
 
-export const register = async (req, res) => {
-  if (handleValidationErrors(req, res)) return;
-
-  const { name, email, password } = req.body;
-
+export const register = async (req, res, next) => {
   try {
-    const existingUser = await User.findOne({ email, provider: 'local' });
-    if (existingUser) {
-      return sendError(res, 409, 'Email already registered');
+    const { name, email, password, gender, age, skinType, goals = [] } = req.body;
+    if (!name || !email || !password) {
+      return sendError(res, 400, 'Nome, email e palavra-passe são obrigatórios.');
+    }
+    const existing = await User.findOne({ email });
+    if (existing) {
+      return sendError(res, 409, 'Já existe uma conta com este email.');
     }
 
+    const hashed = await bcrypt.hash(password, 10);
     const user = await User.create({
       name,
       email,
-      password,
-      provider: 'local'
+      password: hashed,
+      gender,
+      age,
+      skinType,
+      goals,
     });
 
-    const token = signToken(user);
-    return sendSuccess(
-      res,
-      { user: { id: user._id, name: user.name, email: user.email }, token },
-      'Registration successful'
-    );
+    return sendSuccess(res, buildUserResponse(user), 'Registo concluído com sucesso.');
   } catch (error) {
-    return sendError(res, 500, 'Failed to register user', { error: error.message });
+    next(error);
   }
 };
 
-export const login = async (req, res) => {
-  if (handleValidationErrors(req, res)) return;
-
-  const { email, password } = req.body;
-
+export const login = async (req, res, next) => {
   try {
-    const user = await User.findOne({ email, provider: 'local' });
-    if (!user || !(await user.comparePassword(password))) {
-      return sendError(res, 401, 'Invalid credentials');
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return sendError(res, 400, 'Email e palavra-passe são obrigatórios.');
     }
-
-    const token = signToken(user);
-    return sendSuccess(
-      res,
-      { user: { id: user._id, name: user.name, email: user.email }, token },
-      'Login successful'
-    );
-  } catch (error) {
-    return sendError(res, 500, 'Failed to login', { error: error.message });
-  }
-};
-
-export const getProfile = async (req, res) => {
-  try {
-    const user = await User.findById(req.userId).select('-password');
+    const user = await User.findOne({ email });
     if (!user) {
-      return sendError(res, 404, 'User not found');
+      return sendError(res, 401, 'Credenciais inválidas.');
     }
 
-    return sendSuccess(res, { user }, 'Authenticated user profile');
+    const matches = await bcrypt.compare(password, user.password);
+    if (!matches) {
+      return sendError(res, 401, 'Credenciais inválidas.');
+    }
+
+    return sendSuccess(res, buildUserResponse(user), 'Bem-vinda de volta ao GlowTrack.');
   } catch (error) {
-    return sendError(res, 500, 'Failed to fetch profile', { error: error.message });
+    next(error);
   }
+};
+
+export const logout = async (_req, res) => {
+  return sendSuccess(res, { success: true }, 'Sessão terminada.');
 };

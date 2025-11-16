@@ -1,23 +1,12 @@
 import mongoose from 'mongoose';
-import { getEnvConfig } from './env.js';
 
-/**
- * Establishes a connection to MongoDB using mongoose.
- */
+const DEFAULT_URI = 'mongodb://127.0.0.1:27017/glowtrack';
+
 export const connectDB = async () => {
-  const { mongoUri, nodeEnv } = getEnvConfig();
-
-  if (!mongoUri) {
-    throw new Error('Missing MONGO_URI environment variable.');
-  }
-
-  try {
-    await mongoose.connect(mongoUri, {
-      autoIndex: nodeEnv !== 'production'
-    });
-    console.log('✅ Connected to MongoDB');
-  } catch (error) {
-    console.error('❌ MongoDB connection error:', error.message);
-    throw error;
-  }
+  const mongoUri = process.env.MONGODB_URI || DEFAULT_URI;
+  mongoose.set('strictQuery', true);
+  await mongoose.connect(mongoUri, {
+    dbName: process.env.MONGODB_DB || undefined,
+  });
+  console.log('✅ Connected to MongoDB');
 };

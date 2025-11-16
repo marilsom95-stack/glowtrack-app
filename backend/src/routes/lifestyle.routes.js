@@ -1,21 +1,16 @@
 import { Router } from 'express';
-import { authRequired } from '../middlewares/auth.js';
+import { authenticate } from '../middleware/auth.middleware.js';
 import {
-  getLifestyleProfile,
-  getLifestyleSummary,
-  getTodayLifestyleLog,
-  logTodayLifestyle,
-  upsertLifestyleProfile
+  getLifestyle,
+  saveWellbeingEntry,
+  trackWater,
 } from '../controllers/lifestyle.controller.js';
 
 const router = Router();
 
-router.use(authRequired);
-
-router.post('/profile', upsertLifestyleProfile);
-router.get('/profile', getLifestyleProfile);
-router.post('/log/today', logTodayLifestyle);
-router.get('/log/today', getTodayLifestyleLog);
-router.get('/log/summary', getLifestyleSummary);
+router.use(authenticate);
+router.get('/', getLifestyle);
+router.post('/water', trackWater);
+router.post('/wellbeing', saveWellbeingEntry);
 
 export default router;

@@ -1,33 +1,17 @@
 import jwt from 'jsonwebtoken';
-import { getEnvConfig } from '../config/env.js';
 
-const { jwtSecret, jwtExpiresIn } = getEnvConfig();
+const JWT_SECRET = process.env.JWT_SECRET || 'glowtrack-secret';
+const EXPIRATION = '7d';
 
-if (!jwtSecret) {
-  console.warn('⚠️  JWT_SECRET is not set. Tokens cannot be securely generated.');
-}
-
-export const signToken = (user) => {
-  if (!jwtSecret) {
-    throw new Error('JWT secret missing');
-  }
-
-  return jwt.sign(
-    {
-      sub: user._id.toString(),
-      email: user.email
-    },
-    jwtSecret,
-    {
-      expiresIn: jwtExpiresIn || '7d'
-    }
-  );
-};
+export const generateToken = (id) =>
+  jwt.sign({ id }, JWT_SECRET, {
+    expiresIn: EXPIRATION,
+  });
 
 export const verifyToken = (token) => {
-  if (!jwtSecret) {
-    throw new Error('JWT secret missing');
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch (error) {
+    return null;
   }
-
-  return jwt.verify(token, jwtSecret);
 };
