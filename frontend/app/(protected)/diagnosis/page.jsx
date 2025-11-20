@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
 import Tabs from '../../../components/ui/Tabs';
-import { api } from '../../../lib/api.js';
+import { api } from '../../../lib/api';
 
 const fallbackDiagnosis = {
   questions: [

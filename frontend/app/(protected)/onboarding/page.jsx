@@ -5,7 +5,7 @@ import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
-import { api } from '../../../lib/api.js';
+import { api } from '../../../lib/api';
 
 const skinOptions = [
   { label: 'Normal', value: 'normal' },

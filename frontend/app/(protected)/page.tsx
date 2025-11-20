@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
+import { api, useAuthData, useWellbeingData } from '../../lib/api';
 
 const SkeletonBlock = ({ className = '' }: { className?: string }) => (
   <div className={`animate-pulse bg-[color:var(--surface-muted)] rounded-[var(--radius-16)] ${className}`} />
@@ -30,11 +31,20 @@ type WellbeingResponse = {
 };
 
 export default function ProtectedHomePage() {
+  const { data: authData, isLoading: loadingAuth, error: authError } = useAuthData({
+    revalidateOnFocus: false,
+  });
+  const {
+    data: wellbeingData,
+    isLoading: loadingWellbeing,
+    error: wellbeingError,
+    mutate: mutateWellbeing,
+  } = useWellbeingData({ revalidateOnFocus: false });
+
   const [userName, setUserName] = useState<string>('');
   const [wellbeing, setWellbeing] = useState<WellbeingResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fallbackChecklist: ChecklistItem[] = [
     { id: 'hydration', label: 'Hidratação diária', progress: 68 },
@@ -51,70 +61,44 @@ export default function ProtectedHomePage() {
     { title: 'Noite cozy', time: '21:30', description: 'Limpeza dupla + hidratar' },
   ];
 
+  const loading = loadingAuth || loadingWellbeing;
+
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const [authRes, wellbeingRes] = await Promise.all([
-          fetch('/api/auth', { cache: 'no-store' }),
-          fetch('/api/wellbeing', { cache: 'no-store' }),
-        ]);
+    if (authData) {
+      setUserName(authData?.user?.name || (authData as { name?: string })?.name || 'Glowfriend');
+    }
+  }, [authData]);
 
-        if (!authRes.ok) throw new Error('Falha ao carregar utilizadora');
-        if (!wellbeingRes.ok) throw new Error('Falha ao carregar bem-estar');
+  useEffect(() => {
+    if (wellbeingData) {
+      setWellbeing(wellbeingData);
+    }
+  }, [wellbeingData]);
 
-        const authData = await authRes.json();
-        const wellbeingData = await wellbeingRes.json();
-
-        setUserName(authData?.user?.name || authData?.name || 'Glowfriend');
-        setWellbeing(wellbeingData?.data || wellbeingData || {});
-      } catch (err) {
-        console.error(err);
-        setError('Não foi possível carregar os teus dados agora.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+  useEffect(() => {
+    const combinedError = authError || wellbeingError;
+    if (combinedError) {
+      setError('Não foi possível carregar os teus dados agora.');
+    }
+  }, [authError, wellbeingError]);
 
   const handleToggleChecklist = async (id: string) => {
     setSaving(true);
     setError(null);
 
-    setWellbeing((current) => {
-      const existingChecklist = current?.checklist || fallbackChecklist;
-      const updatedChecklist = existingChecklist.map((item) =>
-        item.id === id ? { ...item, completed: !item.completed } : item
-      );
+    const updatedChecklist = (wellbeing?.checklist || fallbackChecklist).map((item) =>
+      item.id === id ? { ...item, completed: !item.completed } : item
+    );
 
-      return {
-        ...(current || {}),
-        glowScore: current?.glowScore,
-        checklist: updatedChecklist,
-        timeline: current?.timeline,
-      } as WellbeingResponse;
-    });
+    setWellbeing((current) => ({
+      ...(current || {}),
+      checklist: updatedChecklist,
+    }));
 
     try {
-      const response = await fetch('/api/wellbeing', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          checklist: (wellbeing?.checklist || fallbackChecklist).map((item) =>
-            item.id === id ? { ...item, completed: !item.completed } : item
-          ),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Não foi possível atualizar o checklist.');
-      }
-
-      const payload = await response.json();
-      setWellbeing(payload?.data || payload || null);
+      const payload = await api.updateWellbeing({ checklist: updatedChecklist });
+      setWellbeing(payload || null);
+      await mutateWellbeing();
     } catch (err) {
       console.error(err);
       setError('Tenta novamente. Não conseguimos registar a atualização.');
