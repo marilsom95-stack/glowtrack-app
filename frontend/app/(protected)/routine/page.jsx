@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Card from '../../../components/ui/Card.jsx';
-import Button from '../../../components/ui/Button.jsx';
+import Card from '../../../components/ui/Card';
+import Button from '../../../components/ui/Button';
 import { api } from '../../../lib/api.js';
 
 export default function RoutinePage() {

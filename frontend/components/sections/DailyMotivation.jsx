@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import Card from '../ui/Card.jsx';
+import Card from '../ui/Card';
 import { MOTIVATIONAL_QUOTES } from '../../lib/constants.js';
 
 export default function DailyMotivation() {

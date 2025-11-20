@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import Card from '../ui/Card.jsx';
+import Card from '../ui/Card';
 import { QUICK_ACTIONS } from '../../lib/constants.js';
 
 export default function HomeQuickActions() {

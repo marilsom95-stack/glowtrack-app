@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import Button from '../ui/Button.jsx';
+import Button from '../ui/Button';
 import { clearToken } from '../../lib/auth.js';
 import { useRouter } from 'next/navigation';
 

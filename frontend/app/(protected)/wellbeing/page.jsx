@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import Card from '../../../components/ui/Card.jsx';
-import Input from '../../../components/ui/Input.jsx';
-import Button from '../../../components/ui/Button.jsx';
+import Card from '../../../components/ui/Card';
+import Input from '../../../components/ui/Input';
+import Button from '../../../components/ui/Button';
 import { api } from '../../../lib/api.js';
 
 export default function WellbeingPage() {

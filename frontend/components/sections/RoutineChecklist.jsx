@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Card from '../ui/Card.jsx';
-import Button from '../ui/Button.jsx';
+import Card from '../ui/Card';
+import Button from '../ui/Button';
 import { api } from '../../lib/api.js';
 
 export default function RoutineChecklist() {
