@@ -10,8 +10,13 @@ const buildUserResponse = (user) => ({
 
 export const register = async (req, res, next) => {
   try {
-    const { name, email, password, gender, age, skinType, goals = [] } = req.body;
-    if (!name || !email || !password) {
+    const { name, nome, email, password, passwordHash, gender, age, skinType, tipoPele, goals = [], objetivos = [], idioma, assinatura } =
+      req.body;
+    const finalName = nome || name;
+    const finalPassword = passwordHash || password;
+    const finalGoals = objetivos.length ? objetivos : goals;
+    const finalSkinType = tipoPele || skinType;
+    if (!finalName || !email || !finalPassword) {
       return sendError(res, 400, 'Nome, email e palavra-passe são obrigatórios.');
     }
     const existing = await User.findOne({ email });
@@ -19,15 +24,17 @@ export const register = async (req, res, next) => {
       return sendError(res, 409, 'Já existe uma conta com este email.');
     }
 
-    const hashed = await bcrypt.hash(password, 10);
+    const hashed = await bcrypt.hash(finalPassword, 10);
     const user = await User.create({
-      name,
+      name: finalName,
       email,
       password: hashed,
       gender,
       age,
-      skinType,
-      goals,
+      skinType: finalSkinType,
+      goals: finalGoals,
+      language: idioma,
+      subscription: assinatura,
     });
 
     return sendSuccess(res, buildUserResponse(user), 'Registo concluído com sucesso.');
