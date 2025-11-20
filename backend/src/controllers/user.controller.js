@@ -13,10 +13,19 @@ export const getCurrentUser = async (req, res, next) => {
 
 export const updatePreferences = async (req, res, next) => {
   try {
-    const allowedFields = ['gender', 'age', 'skinType', 'goals'];
+    const allowedFields = ['gender', 'age', 'skinType', 'goals', 'language', 'subscription'];
+    const aliasFields = {
+      tipoPele: 'skinType',
+      objetivos: 'goals',
+      idioma: 'language',
+      assinatura: 'subscription',
+    };
     const updates = {};
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) updates[field] = req.body[field];
+    });
+    Object.entries(aliasFields).forEach(([alias, target]) => {
+      if (req.body[alias] !== undefined) updates[target] = req.body[alias];
     });
     const user = await User.findByIdAndUpdate(req.user._id, updates, {
       new: true,
