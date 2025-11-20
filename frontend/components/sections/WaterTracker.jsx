@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Progress from '../ui/Progress';
-import { api } from '../../lib/api.js';
+import { api } from '../../lib/api';
 
 export default function WaterTracker() {
   const [goal, setGoal] = useState(8);

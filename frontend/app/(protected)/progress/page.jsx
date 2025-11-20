@@ -5,7 +5,7 @@ import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import Badge from '../../../components/ui/Badge';
-import { api } from '../../../lib/api.js';
+import { api } from '../../../lib/api';
 
 const placeholderPhotos = [
   {

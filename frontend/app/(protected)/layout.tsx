@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import BottomNav from '../../components/layout/BottomNav';
 import Header from '../../components/layout/Header.jsx';
 import Sidebar from '../../components/layout/Sidebar.jsx';
-import { api } from '../../lib/api.js';
+import { api } from '../../lib/api';
 import { getToken } from '../../lib/auth.js';
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5001';

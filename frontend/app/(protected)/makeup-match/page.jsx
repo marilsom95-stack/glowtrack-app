@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Card from '../../../components/ui/Card';
 import Badge from '../../../components/ui/Badge';
-import { api } from '../../../lib/api.js';
+import { api } from '../../../lib/api';
 
 export default function MakeupMatchPage() {
   const [match, setMatch] = useState(null);

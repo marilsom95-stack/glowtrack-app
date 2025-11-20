@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
-import { api } from '../../../lib/api.js';
+import { api } from '../../../lib/api';
 
 export default function LifestylePage() {
   const [data, setData] = useState(null);
