@@ -1,6 +1,6 @@
 import { getToken } from './auth.js';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5001';
 
 const request = async (endpoint, options = {}) => {
   const token = getToken();

@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Card from '../ui/Card.jsx';
-import Button from '../ui/Button.jsx';
-import ProgressBar from '../ui/ProgressBar.jsx';
+import Card from '../ui/Card';
+import Button from '../ui/Button';
+import Progress from '../ui/Progress';
 import { api } from '../../lib/api.js';
 
 export default function WaterTracker() {
@@ -45,7 +45,7 @@ export default function WaterTracker() {
       <p className="text-sm text-[#7A7687] mb-2">
         Meta: {goal} copos • Hoje: {current}
       </p>
-      <ProgressBar value={percentage} />
+      <Progress value={percentage} />
       <Button className="mt-4" onClick={addWater}>
         +1 copo
       </Button>

@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Card from '../../../components/ui/Card.jsx';
-import Input from '../../../components/ui/Input.jsx';
-import Select from '../../../components/ui/Select.jsx';
-import Button from '../../../components/ui/Button.jsx';
+import Card from '../../../components/ui/Card';
+import Input from '../../../components/ui/Input';
+import Select from '../../../components/ui/Select';
+import Button from '../../../components/ui/Button';
 import { api } from '../../../lib/api.js';
 
 const languageOptions = [

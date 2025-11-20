@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Card from '../../../components/ui/Card.jsx';
-import Badge from '../../../components/ui/Badge.jsx';
+import Card from '../../../components/ui/Card';
+import Badge from '../../../components/ui/Badge';
 import { api } from '../../../lib/api.js';
 
 export default function MakeupMatchPage() {
