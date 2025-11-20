@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import BottomNav from '../../components/layout/BottomNav.jsx';
+import BottomNav from '../../components/layout/BottomNav';
 import Header from '../../components/layout/Header.jsx';
 import Sidebar from '../../components/layout/Sidebar.jsx';
 import { api } from '../../lib/api.js';
