@@ -14,6 +14,7 @@ type ChecklistItem = {
   id: string;
   label: string;
   completed?: boolean;
+  progress?: number;
 };
 
 type TimelineEntry = {
@@ -33,12 +34,14 @@ export default function ProtectedHomePage() {
   const [wellbeing, setWellbeing] = useState<WellbeingResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const fallbackChecklist: ChecklistItem[] = [
-    { id: 'agua', label: 'Hidrataste-te hoje?' },
-    { id: 'sono', label: 'Dormiste pelo menos 7h?' },
-    { id: 'pele', label: 'Seguiste a rotina de pele?' },
-    { id: 'respirar', label: 'Fez uma pausa para respirar?' },
+    { id: 'hydration', label: 'Hidratação diária', progress: 68 },
+    { id: 'facial-exercises', label: 'Exercícios faciais' },
+    { id: 'self-esteem', label: 'Autoestima' },
+    { id: 'breathing', label: 'Respiração' },
+    { id: 'mindfulness', label: 'Mindfulness' },
   ];
 
   const fallbackTimeline: TimelineEntry[] = [
@@ -76,6 +79,49 @@ export default function ProtectedHomePage() {
 
     fetchData();
   }, []);
+
+  const handleToggleChecklist = async (id: string) => {
+    setSaving(true);
+    setError(null);
+
+    setWellbeing((current) => {
+      const existingChecklist = current?.checklist || fallbackChecklist;
+      const updatedChecklist = existingChecklist.map((item) =>
+        item.id === id ? { ...item, completed: !item.completed } : item
+      );
+
+      return {
+        ...(current || {}),
+        glowScore: current?.glowScore,
+        checklist: updatedChecklist,
+        timeline: current?.timeline,
+      } as WellbeingResponse;
+    });
+
+    try {
+      const response = await fetch('/api/wellbeing', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          checklist: (wellbeing?.checklist || fallbackChecklist).map((item) =>
+            item.id === id ? { ...item, completed: !item.completed } : item
+          ),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Não foi possível atualizar o checklist.');
+      }
+
+      const payload = await response.json();
+      setWellbeing(payload?.data || payload || null);
+    } catch (err) {
+      console.error(err);
+      setError('Tenta novamente. Não conseguimos registar a atualização.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const glowScore = useMemo(() => {
     if (wellbeing?.glowScore) return Math.round(wellbeing.glowScore);
@@ -174,9 +220,30 @@ export default function ProtectedHomePage() {
                       </p>
                     </div>
                   </div>
-                  <Button variant="secondary" className="text-sm px-4 py-2 !rounded-[12px]">
-                    {item.completed ? 'Concluído' : 'Marcar'}
-                  </Button>
+                  <div className="flex flex-col items-end gap-2 w-40 sm:w-48">
+                    {typeof item.progress === 'number' && (
+                      <div className="w-full">
+                        <div className="flex items-center justify-between text-xs text-[color:var(--text-muted)]">
+                          <span>Progresso</span>
+                          <span className="font-semibold">{item.progress}%</span>
+                        </div>
+                        <div className="mt-1 h-2 w-full rounded-full bg-[color:var(--border-subtle)]">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-[#c7b59f] to-[#e7d9c7] transition-all duration-300"
+                            style={{ width: `${Math.min(100, Math.max(0, item.progress))}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    <Button
+                      variant="secondary"
+                      className="text-sm px-4 py-2 !rounded-[12px]"
+                      onClick={() => handleToggleChecklist(item.id)}
+                      disabled={saving}
+                    >
+                      {item.completed ? 'Concluído' : saving ? 'A guardar...' : 'Marcar'}
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
